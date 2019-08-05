@@ -17,6 +17,5 @@ with np.load('mnist.npz') as data:
 # test_data = [(x, y) for x, y in zip(test_images, test_labels)]
 # validation_data = [(x, y) for x, y in zip(validation_images, validation_labels)]
 
-net = Network([784, 30, 10], training_images)
-net.feedforward()
-# net.SGD(training_data, 30, 10, 0.5, test_data=test_data)
+net = Network([784, 30, 10], training_images, training_labels)
+net.SGD(30, 3.0, 10, test_images=test_images, test_labels=test_labels)
