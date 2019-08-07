@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 class Network(object):
 
@@ -57,13 +58,21 @@ class Network(object):
     # Stochastic gradient descent
     # This is the outer-loop stepping through
     # epochs and splitting batches
-    def SGD(self, epochs, eta, mini_batch_size, test_images = None, test_labels = None):
+    def SGD(self, epochs, eta, mini_batch_size, test_images = None, test_labels = None, lmbda = None, monitor_cost = False):
 
         # test_images = np.array(np.reshape(test_images, (len(test_images), 784)))
         # print("Epoch {0}: {1} / {2}".format(0, self.evaluate(test_images, test_labels), len(test_images)))
 
-        if test_labels.any():
+        if test_labels:
             n_test = len(test_images)
+        
+        if monitor_cost:
+            print("plotting")
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            hl, = ax.plot([], [], 'r-')
+            plt.ion()
+            plt.show()
 
         n = len(self.training_images)
 
@@ -84,16 +93,29 @@ class Network(object):
             ]
 
             for batch, labels in zip(mini_batches, mini_batch_labels):
-                self.backpropogate(batch, labels, eta)
+                self.backpropogate(batch, labels, mini_batch_size, eta, lmbda)
+
+            if monitor_cost:
+                hl.set_xdata(np.append(hl.get_xdata(), j))
+                hl.set_ydata(np.append(hl.get_ydata(), self.total_cost(self.training_images, self.training_labels, lmbda)))
+                ax.relim()
+                ax.autoscale_view()
+                fig.canvas.draw()
+                fig.canvas.flush_events()
+                # plt.show()
             
-            if test_labels.any():
+            if test_labels:
                 print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(test_images, test_labels), n_test))
             else:
                 print ("Epoch {0} complete".format(j + 1))
+        
+        if monitor_cost:
+            plt.ioff()
+            plt.show()
 
 
     # WARNING: calculates over entire mini batch simultaneously!
-    def backpropogate(self, X, Y, eta):
+    def backpropogate(self, X, Y, batch_size, eta, lmbda=None):
 
         # NOTE * is element-wise multiplication (Hadamard product)
         # NOTE @ is matrix multiplication
@@ -134,17 +156,23 @@ class Network(object):
         # Wh --> (784, 30)
         # print(np.dot(Eh, X).shape)
 
-        self.Wo -= (eta / 10.0) * np.dot(Eo, Ah).T
-        self.Wh -= (eta / 10.0) * np.dot(Eh.T, X).T
+        # L2 regularization scaling factor
+        if lmbda:
+            sf = (1.0 - (eta * lmbda) / eta)
+        else:
+            sf = 1.0
+
+        self.Wo = sf * self.Wo - (eta / batch_size) * np.dot(Eo.T, Ah).T
+        self.Wh = sf * self.Wh - (eta / batch_size) * np.dot(Eh.T, X).T
 
         # print(Eo.shape)
         # print(self.Bo.shape)
         # print(np.mean(Eo, axis=1).shape)
-        self.Bo -= (eta / 10.0) * np.mean(Eo, axis=0)
+        self.Bo -= (eta / batch_size) * np.mean(Eo, axis=0)
         # print(Eh.shape)
         # print(self.Bh.shape)
         # print(np.mean(Eh, axis=1).shape)
-        self.Bh -= (eta / 10.0) * np.mean(Eh, axis=0)
+        self.Bh -= (eta / batch_size) * np.mean(Eh, axis=0)
 
         # print(self.Bo.shape)
         # print(Ao.shape)
@@ -177,6 +205,19 @@ class Network(object):
 
 
         return total
+
+    # TODO Handle case where no lambda
+    def total_cost(self, X, Y, lmbda):
+
+        A = self.feedforward(X)
+        intermediate = np.nan_to_num(Y * np.log(A) + (1.0 - Y) * np.log(1.0 - A))
+        C_0 = (-1.0 / len(X)) * np.sum(intermediate.flatten())
+        if lmbda:
+            return C_0 + (lmbda / (2 * len(X))) * sum(w ** 2 for w in np.append(self.Wh, self.Wo).flatten())
+        else:
+            return C_0
+        # else:
+        #   return -np.log(1 - yHat) + (lmbda / (2 * len(yHat))) * sum(w ** 2 for w in np.concatenate(self.Wh, self.Wo).flatten())
 
 def unison_shuffled_copies(a, b):
     assert len(a) == len(b)
