@@ -14,22 +14,22 @@ class Network(object):
         self.sizes = sizes
 
         # Create matrix of hidden weights
-        self.Wh = np.random.randn(sizes[0], sizes[1])
+        self.Wh = np.random.randn(sizes[0], sizes[1]) * np.sqrt(2.0/sizes[0])
 
         # Create matrix of hidden biases
-        self.Bh = np.random.randn(1, sizes[1])
+        self.Bh = np.full((1, sizes[1]), 0.1)
 
         # Create matrix of output weights
-        self.Wo = np.random.randn(sizes[1], sizes[2])
+        self.Wo = np.random.randn(sizes[1], sizes[2]) * np.sqrt(2.0/sizes[1])
 
         # Create matrix of output biases
-        self.Bo = np.random.randn(1, sizes[2])
+        self.Bo = np.full((1, sizes[2]), 0.1)
 
         # Create matrix of input data
         # 50000 rows, 784 columns
-        self.training_images = np.array(np.reshape(training_images, (50000, 784)))
+        self.training_images = training_images
 
-        self.training_labels = np.array(np.reshape(training_labels, (len(training_labels), 10)))
+        self.training_labels = training_labels
     
     @staticmethod
     def sigmoid(z):
@@ -54,8 +54,6 @@ class Network(object):
 
         if test_labels.any():
             n_test = len(test_images)
-            test_labels = np.array(np.reshape(test_labels, (len(test_labels), 10)))
-            test_images = np.array(np.reshape(test_images, (len(test_images), 784)))
 
         n = len(self.training_images)
 
