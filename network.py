@@ -38,7 +38,17 @@ class Network(object):
     # Derivative of the activation function
     @staticmethod
     def sigmoid_derivative(z):
-        return Network.sigmoid(z) * (1 - Network.sigmoid(z))
+        return Network.sigmoid(z) * (1.0 - Network.sigmoid(z))
+    
+    @staticmethod
+    def softmax(x):
+        # Compute softmax values for each sets of scores in x.
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum(axis=0) # only difference
+
+    @staticmethod
+    def softmax_derivative(x):
+        return Network.softmax(x) * (1.0 - Network.softmax(x))
     
     def feedforward(self, X):
         H = self.sigmoid(np.dot(X, self.Wh) + self.Bh)
