@@ -58,19 +58,32 @@ class Network(object):
     # Stochastic gradient descent
     # This is the outer-loop stepping through
     # epochs and splitting batches
-    def SGD(self, epochs, eta, mini_batch_size, test_images = None, test_labels = None, lmbda = None, monitor_cost = False):
+    def SGD(self, epochs, eta, mini_batch_size, test_images = None, test_labels = None, lmbda = None, monitor_cost = False, monitor_eval_accuracy = False, monitor_train_accuracy = False):
 
-        # test_images = np.array(np.reshape(test_images, (len(test_images), 784)))
-        # print("Epoch {0}: {1} / {2}".format(0, self.evaluate(test_images, test_labels), len(test_images)))
+        test_data_supplied = True
+        try:
+            test_images.shape
+        except AttributeError:
+            test_data_supplied = False
 
-        if test_labels:
+
+        if test_data_supplied:
             n_test = len(test_images)
         
         if monitor_cost:
-            print("plotting")
             fig = plt.figure()
             ax = fig.add_subplot(111)
             hl, = ax.plot([], [], 'r-')
+            plt.ion()
+            plt.show()
+
+        if monitor_eval_accuracy or monitor_train_accuracy:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            if monitor_eval_accuracy:
+                el, = ax.plot([], [], 'r-')
+            if monitor_train_accuracy:
+                tl, = ax.plot([], [], color="blue")
             plt.ion()
             plt.show()
 
@@ -104,12 +117,24 @@ class Network(object):
                 fig.canvas.flush_events()
                 # plt.show()
             
-            if test_labels:
+            if monitor_eval_accuracy or monitor_train_accuracy:
+                if monitor_eval_accuracy:
+                    el.set_xdata(np.append(el.get_xdata(), j))
+                    el.set_ydata(np.append(el.get_ydata(), self.evaluate(test_images[:100], test_labels[:100])))
+                if monitor_train_accuracy:
+                    tl.set_xdata(np.append(tl.get_xdata(), j))
+                    tl.set_ydata(np.append(tl.get_ydata(), self.evaluate(self.training_images[:100], self.training_labels[:100])))
+                ax.relim()
+                ax.autoscale_view()
+                fig.canvas.draw()
+                fig.canvas.flush_events()
+            
+            if test_data_supplied:
                 print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(test_images, test_labels), n_test))
             else:
                 print ("Epoch {0} complete".format(j + 1))
         
-        if monitor_cost:
+        if monitor_cost or monitor_eval_accuracy or monitor_train_accuracy:
             plt.ioff()
             plt.show()
 
