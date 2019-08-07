@@ -87,9 +87,9 @@ class Network(object):
                 self.backpropogate(batch, labels, eta)
             
             if test_labels.any():
-                print("Epoch {0}: {1} / {2}".format(j, self.evaluate(test_images, test_labels), n_test))
+                print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(test_images, test_labels), n_test))
             else:
-                print ("Epoch {0} complete".format(j))
+                print ("Epoch {0} complete".format(j + 1))
 
 
     # WARNING: calculates over entire mini batch simultaneously!
