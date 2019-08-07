@@ -25,15 +25,11 @@ class Network(object):
         # Create matrix of output biases
         self.Bo = np.random.randn(1, sizes[2])
 
-        # WARNING: self.X needs to be changed to only hold
-        # images in the current mini batch!
         # Create matrix of input data
         # 50000 rows, 784 columns
         self.training_images = np.array(np.reshape(training_images, (50000, 784)))
-        # WARNING: self.Y needs to be changed to only
-        # hold labels for the current mini batch!
+
         self.training_labels = np.array(np.reshape(training_labels, (len(training_labels), 10)))
-        # np.array(np.reshape(training_labels, (len(training_labels, 10))))
     
     @staticmethod
     def sigmoid(z):
@@ -65,7 +61,7 @@ class Network(object):
 
         for j in range(epochs):
 
-            # Shuffle data
+            # Shuffle data WARNING: Valid for 1 EPOCH
             self.training_images, self.training_labels = unison_shuffled_copies(self.training_images, self.training_labels)
 
             # Split into mini batches
@@ -87,12 +83,13 @@ class Network(object):
             else:
                 print ("Epoch {0} complete".format(j))
 
-            
-
-            
 
     # WARNING: calculates over entire mini batch simultaneously!
     def backpropogate(self, X, Y, eta):
+
+        # NOTE * is element-wise multiplication (Hadamard product)
+        # NOTE @ is matrix multiplication
+        # NOTE np.dot on matrices is equivalent to @
 
         ## Feedforward, storing Z-values and activations
 
@@ -104,26 +101,63 @@ class Network(object):
         Zo = np.dot(Ah, self.Wo) + self.Bo
         Ao = self.sigmoid(Zo)
 
-        # Compute output layer error
+        # for i in range(len(X)):
+        #     Eo = np.dot((Ao[i] - Y[i]), self.sigmoid_derivative(Zo[i]))
+        #     Eh = np.dot(np.dot(self.Wo, Eo), self.sigmoid_derivative(Zh))
+
+        # Compute output layer error (10, 10)
         Eo = (Ao - Y) * self.sigmoid_derivative(Zo)
 
-        # Computer hidden layer error
-        Eh = Eo * self.Wo * self.sigmoid_derivative(Zh)
-        # np.dot(Eo @ self.Wo, self.sigmoid_derivative(Zh))
 
-        # Compute derivative of cost with respect to weight
-        nabla_w_o = np.dot(Eo, Ah)
-        nabla_w_h = np.dot(Eh, X)
+        # Computer hidden layer error (10, 30)
+        # print(Eo.shape)
+        # print(self.Wo.shape)
+        # print(self.sigmoid_derivative(Zh).shape)
+        Eh = (Eo @ self.Wo.T) * self.sigmoid_derivative(Zh)
+        # np.dot(self.Wo, Eo) --> (30, 10)
 
-        # Set derivative of cost with respect to bias
-        nabla_b_o = Eo # ???
-        nabla_b_h = Eh
+        # print(self.sigmoid_derivative(Zh).shape) # (10, 30)
+        # print(self.Wo.shape) # (30, 10)
+        # print(Eh.shape) # (30, 30)
+        # print(self.Wh.shape) # (784, 30)
+        # X --> (10, 784)
+        # Eh to multiply if Eh * X --> (30, 10)
+        # Result must be (784, 30) so (Eh * X).T
+        # Wh --> (784, 30)
+        # print(np.dot(Eh, X).shape)
 
-        self.Wo -= eta * nabla_w_o
-        self.Wh -= eta * nabla_w_h
+        self.Wo -= (eta / 10.0) * np.dot(Eo, Ah).T
+        self.Wh -= (eta / 10.0) * np.dot(Eh.T, X).T
 
-        self.Bo -= eta * nabla_b_o
-        self.Bh -= eta * nabla_b_h
+        # print(Eo.shape)
+        # print(self.Bo.shape)
+        # print(np.mean(Eo, axis=1).shape)
+        self.Bo -= (eta / 10.0) * np.mean(Eo, axis=0)
+        # print(Eh.shape)
+        # print(self.Bh.shape)
+        # print(np.mean(Eh, axis=1).shape)
+        self.Bh -= (eta / 10.0) * np.mean(Eh, axis=0)
+
+        # print(self.Bo.shape)
+        # print(Ao.shape)
+        # print(Y.shape)
+
+        # self.Bo -= (eta / 10.0) * (Ao - Y)
+        # self.Bh -= (eta / 10.0) * np.dot(self.Wo, Eo)
+
+        # # Compute derivative of cost with respect to weight
+        # nabla_w_o = np.dot(Eo, Ah)
+        # nabla_w_h = np.dot(Eh, X)
+
+        # # Set derivative of cost with respect to bias
+        # nabla_b_o = Eo # ???
+        # nabla_b_h = Eh
+
+        # self.Wo -= eta * nabla_w_o
+        # self.Wh -= eta * nabla_w_h
+
+        # self.Bo -= eta * nabla_b_o
+        # self.Bh -= eta * nabla_b_h
     
     def evaluate(self, X, Y):
         test_results = self.feedforward(X)
