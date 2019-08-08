@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+from graph import Graph
 
 class Network(object):
 
@@ -9,7 +10,7 @@ class Network(object):
     # the network. e.g [5, 3, 2] is a network with 3 layers where
     # the input layer has 5 neurons, the single hidden layer has 
     # 3 neurons and the output layer has 2 neurons.
-    def __init__(self, sizes, training_images, training_labels):
+    def __init__(self, sizes, training_images, training_labels, test_images, test_labels, validation_images, validation_labels):
 
         self.num_layers = len(sizes)
         self.sizes = sizes
@@ -29,8 +30,11 @@ class Network(object):
         # Create matrix of input data
         # 50000 rows, 784 columns
         self.training_images = training_images
-
         self.training_labels = training_labels
+        self.test_images = test_images
+        self.test_labels = test_labels
+        self.validation_images = validation_images
+        self.validation_labels = validation_labels
     
     @staticmethod
     def sigmoid(z):
@@ -58,40 +62,26 @@ class Network(object):
     # Stochastic gradient descent
     # This is the outer-loop stepping through
     # epochs and splitting batches
-    def SGD(self, epochs, eta, mini_batch_size, test_images = None, test_labels = None, lmbda = None, monitor_cost = False, monitor_eval_accuracy = False, monitor_train_accuracy = False):
-
-        test_data_supplied = True
-        try:
-            test_images.shape
-        except AttributeError:
-            test_data_supplied = False
-
-
-        if test_data_supplied:
-            n_test = len(test_images)
+    def SGD(self, epochs, eta, mini_batch_size, lmbda = None, monitor_text = False, monitor_cost = False, monitor_eval_accuracy = False, monitor_train_accuracy = False):
         
-        if monitor_cost:
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            hl, = ax.plot([], [], 'r-')
-            plt.ion()
-            plt.show()
-
-        if monitor_eval_accuracy or monitor_train_accuracy:
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            if monitor_eval_accuracy:
-                el, = ax.plot([], [], 'r-')
-            if monitor_train_accuracy:
-                tl, = ax.plot([], [], color="blue")
-            plt.ion()
-            plt.show()
+        if monitor_cost or monitor_eval_accuracy or monitor_train_accuracy:
+            graph = Graph()
+            if monitor_cost:
+                graph.add_line("cost")
+                graph.add_axes_labels("Epochs", "Cost")
+            if monitor_eval_accuracy or monitor_train_accuracy:
+                graph.add_axes_labels("Epochs", "Accuracy")
+                if monitor_eval_accuracy:
+                    graph.add_line("eval_acc")
+                if monitor_train_accuracy:
+                    graph.add_line("train_acc", color="blue")
 
         n = len(self.training_images)
+        n_test = len(self.test_images)
 
         for j in range(epochs):
 
-            # Shuffle data WARNING: Valid for 1 EPOCH
+            # Shuffle data
             self.training_images, self.training_labels = unison_shuffled_copies(self.training_images, self.training_labels)
 
             # Split into mini batches
@@ -108,29 +98,19 @@ class Network(object):
             for batch, labels in zip(mini_batches, mini_batch_labels):
                 self.backpropogate(batch, labels, mini_batch_size, eta, lmbda)
 
-            if monitor_cost:
-                hl.set_xdata(np.append(hl.get_xdata(), j))
-                hl.set_ydata(np.append(hl.get_ydata(), self.total_cost(self.training_images, self.training_labels, lmbda)))
-                ax.relim()
-                ax.autoscale_view()
-                fig.canvas.draw()
-                fig.canvas.flush_events()
-                # plt.show()
-            
-            if monitor_eval_accuracy or monitor_train_accuracy:
+            if monitor_cost or monitor_eval_accuracy or monitor_train_accuracy:
+                if monitor_cost:
+                    graph.add_data("cost", j, self.total_cost(self.training_images, self.training_labels, lmbda))
                 if monitor_eval_accuracy:
-                    el.set_xdata(np.append(el.get_xdata(), j))
-                    el.set_ydata(np.append(el.get_ydata(), self.evaluate(test_images[:100], test_labels[:100])))
+                    self.test_images, self.test_labels = unison_shuffled_copies(self.test_images, self.test_labels)
+                    graph.add_data("eval_acc", j, self.evaluate(self.test_images[:100], self.test_labels[:100]))
                 if monitor_train_accuracy:
-                    tl.set_xdata(np.append(tl.get_xdata(), j))
-                    tl.set_ydata(np.append(tl.get_ydata(), self.evaluate(self.training_images[:100], self.training_labels[:100])))
-                ax.relim()
-                ax.autoscale_view()
-                fig.canvas.draw()
-                fig.canvas.flush_events()
+                    graph.add_data("train_acc", j, self.evaluate(self.training_images[:100], self.training_labels[:100]))
+                
+                graph.update()
             
-            if test_data_supplied:
-                print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(test_images, test_labels), n_test))
+            if monitor_text:
+                print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(self.test_images, self.test_labels), n_test))
             else:
                 print ("Epoch {0} complete".format(j + 1))
         
