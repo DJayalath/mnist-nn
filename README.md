@@ -9,3 +9,8 @@ This project is for learning purposes only and is an attempt at implementing [Ne
 - Fully vectorised (elements in mini batch processed simultaneously in matrix)
 - L2 regularization
 - Dynamic updating cost vs epoch graph
+## Cost vs Epochs
+![Alt text](CostvEpochs.png?raw=true "Cost vs Epochs")
+## Feedforward Randomly Selected Images in Test Set
+##### Original Image | Prediction | Confidence
+![Alt text](Example.png?raw=true "Random Feedforward")
