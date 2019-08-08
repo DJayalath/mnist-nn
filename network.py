@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import matplotlib.pyplot as plt
 from graph import Graph
 
 class Network(object):
@@ -115,8 +114,7 @@ class Network(object):
                 print ("Epoch {0} complete".format(j + 1))
         
         if monitor_cost or monitor_eval_accuracy or monitor_train_accuracy:
-            plt.ioff()
-            plt.show()
+            graph.ioff()
 
 
     # WARNING: calculates over entire mini batch simultaneously!
