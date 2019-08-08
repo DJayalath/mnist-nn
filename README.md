@@ -1,5 +1,5 @@
 # MNIST-NN
-##### Shallow neural network for classifiying hand-written digits using the MNIST dataset. 
+##### Shallow multilayer perceptron neural network for classifiying hand-written digits using the MNIST dataset. 
 This project is for learning purposes only and is an attempt at implementing [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/) and converting it into a fully matrix form
 ## Features
 - From first principles (no helper libraries)
@@ -14,3 +14,7 @@ This project is for learning purposes only and is an attempt at implementing [Ne
 ## Feedforward Randomly Selected Images in Test Set
 ##### Original Image | Prediction | Confidence
 ![Alt text](Example.png?raw=true "Random Feedforward")
+
+Final classification accuracy after 30 epochs: ~ 96%
+
+###### Todo: Improve with hyper-parameter optimization
