@@ -20,8 +20,8 @@ validation_labels = np.array(np.reshape(validation_labels, (len(test_labels), 10
 validation_images = np.array(np.reshape(validation_images, (len(validation_images), 784)))
 
 # Train network
-net = Network([784, 30, 10], training_images, training_labels)
-net.SGD(500, 0.5, 20, test_images=test_images, test_labels=test_labels)
+net = Network([784, 30, 10], training_images[:1000], training_labels[:1000], test_images, test_labels, validation_images, validation_labels)
+net.SGD(500, 0.5, 20, monitor_eval_accuracy=True, monitor_train_accuracy=True)
 # net.SGD(200, 0.5, 20, lmbda=0.01, monitor_cost=True)
 
 
