@@ -26,3 +26,7 @@ class Graph(object):
         self.ax.autoscale_view()
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+    
+    def ioff(self):
+        plt.ioff()
+        plt.show()
