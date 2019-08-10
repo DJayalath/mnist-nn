@@ -12,6 +12,7 @@ class Network(object):
     def __init__(self, sizes, training_images, training_labels, test_images, test_labels, validation_images, validation_labels):
 
         self.num_layers = len(sizes)
+        assert self.num_layers == 3, "Network only supports a single hidden layer!"
         self.sizes = sizes
 
         # Create matrix of hidden weights
@@ -26,8 +27,7 @@ class Network(object):
         # Create matrix of output biases
         self.Bo = np.full((1, sizes[2]), 0.1)
 
-        # Create matrix of input data
-        # 50000 rows, 784 columns
+        # Create matrices from input data
         self.training_images = training_images
         self.training_labels = training_labels
         self.test_images = test_images
@@ -44,19 +44,11 @@ class Network(object):
     def sigmoid_derivative(z):
         return Network.sigmoid(z) * (1.0 - Network.sigmoid(z))
     
-    @staticmethod
-    def softmax(x):
-        # Compute softmax values for each sets of scores in x.
-        e_x = np.exp(x - np.max(x))
-        return e_x / e_x.sum(axis=0) # only difference
-
-    @staticmethod
-    def softmax_derivative(x):
-        return Network.softmax(x) * (1.0 - Network.softmax(x))
-    
     def feedforward(self, X):
-        H = self.sigmoid(np.dot(X, self.Wh) + self.Bh)
-        return self.sigmoid(np.dot(H, self.Wo) + self.Bo)
+        # Input layer --> Hidden layer
+        H = self.sigmoid(X @ self.Wh + self.Bh)
+        # Hidden layer --> Output layer
+        return self.sigmoid(H @ self.Wo + self.Bo)
     
     # Stochastic gradient descent
     # This is the outer-loop stepping through
@@ -117,7 +109,6 @@ class Network(object):
             graph.ioff()
 
 
-    # WARNING: calculates over entire mini batch simultaneously!
     def backpropogate(self, X, Y, batch_size, eta, lmbda=None):
 
         # NOTE * is element-wise multiplication (Hadamard product)
@@ -127,89 +118,41 @@ class Network(object):
         ## Feedforward, storing Z-values and activations
 
         # Compute hidden Z-values and activations
-        Zh = np.dot(X, self.Wh) + self.Bh
+        Zh = X @ self.Wh + self.Bh
         Ah = self.sigmoid(Zh)
 
         # Compute output Z-values and activations
-        Zo = np.dot(Ah, self.Wo) + self.Bo
+        Zo = Ah @ self.Wo + self.Bo
         Ao = self.sigmoid(Zo)
 
-        # for i in range(len(X)):
-        #     Eo = np.dot((Ao[i] - Y[i]), self.sigmoid_derivative(Zo[i]))
-        #     Eh = np.dot(np.dot(self.Wo, Eo), self.sigmoid_derivative(Zh))
-
-        # Compute output layer error (10, 10)
+        # Compute output layer error
         Eo = (Ao - Y) * self.sigmoid_derivative(Zo)
 
-
-        # Computer hidden layer error (10, 30)
-        # print(Eo.shape)
-        # print(self.Wo.shape)
-        # print(self.sigmoid_derivative(Zh).shape)
+        # Computer hidden layer error
         Eh = (Eo @ self.Wo.T) * self.sigmoid_derivative(Zh)
-        # np.dot(self.Wo, Eo) --> (30, 10)
-
-        # print(self.sigmoid_derivative(Zh).shape) # (10, 30)
-        # print(self.Wo.shape) # (30, 10)
-        # print(Eh.shape) # (30, 30)
-        # print(self.Wh.shape) # (784, 30)
-        # X --> (10, 784)
-        # Eh to multiply if Eh * X --> (30, 10)
-        # Result must be (784, 30) so (Eh * X).T
-        # Wh --> (784, 30)
-        # print(np.dot(Eh, X).shape)
 
         # L2 regularization scaling factor
         if lmbda:
             sf = (1.0 - (eta * lmbda) / eta)
         else:
             sf = 1.0
+        
+        # Compute eta / m for efficiency
+        ebs = eta / batch_size
 
-        self.Wo = sf * self.Wo - (eta / batch_size) * np.dot(Eo.T, Ah).T
-        self.Wh = sf * self.Wh - (eta / batch_size) * np.dot(Eh.T, X).T
+        # Apply weight update rule
+        self.Wo = sf * self.Wo - ebs * (Ah.T @ Eo)
+        self.Wh = sf * self.Wh - ebs * (X.T @ Eh)
 
-        # print(Eo.shape)
-        # print(self.Bo.shape)
-        # print(np.mean(Eo, axis=1).shape)
-        self.Bo -= (eta / batch_size) * np.mean(Eo, axis=0)
-        # print(Eh.shape)
-        # print(self.Bh.shape)
-        # print(np.mean(Eh, axis=1).shape)
-        self.Bh -= (eta / batch_size) * np.mean(Eh, axis=0)
-
-        # print(self.Bo.shape)
-        # print(Ao.shape)
-        # print(Y.shape)
-
-        # self.Bo -= (eta / 10.0) * (Ao - Y)
-        # self.Bh -= (eta / 10.0) * np.dot(self.Wo, Eo)
-
-        # # Compute derivative of cost with respect to weight
-        # nabla_w_o = np.dot(Eo, Ah)
-        # nabla_w_h = np.dot(Eh, X)
-
-        # # Set derivative of cost with respect to bias
-        # nabla_b_o = Eo # ???
-        # nabla_b_h = Eh
-
-        # self.Wo -= eta * nabla_w_o
-        # self.Wh -= eta * nabla_w_h
-
-        # self.Bo -= eta * nabla_b_o
-        # self.Bh -= eta * nabla_b_h
+        # Apply bias update rule
+        self.Bo -= ebs * np.sum(Eo, axis=0)
+        self.Bh -= ebs * np.sum(Eh, axis=0)
     
+    # Feedforward input and count how many correct answers were found
     def evaluate(self, X, Y):
-        test_results = self.feedforward(X)
+        return sum(np.argmax(x) == np.argmax(y) for x, y in zip(self.feedforward(X), Y))
 
-        total = 0
-        for i in range(len(test_results)):
-            if np.argmax(test_results[i]) == np.argmax(Y[i]):
-                total += 1
-
-
-        return total
-
-    # TODO Handle case where no lambda
+    # Calculate cross-entropy cost
     def total_cost(self, X, Y, lmbda):
 
         A = self.feedforward(X)
@@ -219,9 +162,8 @@ class Network(object):
             return C_0 + (lmbda / (2 * len(X))) * sum(w ** 2 for w in np.append(self.Wh, self.Wo).flatten())
         else:
             return C_0
-        # else:
-        #   return -np.log(1 - yHat) + (lmbda / (2 * len(yHat))) * sum(w ** 2 for w in np.concatenate(self.Wh, self.Wo).flatten())
 
+# Shuffle two arrays in unison and return copies
 def unison_shuffled_copies(a, b):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
