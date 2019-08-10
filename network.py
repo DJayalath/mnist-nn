@@ -53,7 +53,7 @@ class Network(object):
     # Stochastic gradient descent
     # This is the outer-loop stepping through
     # epochs and splitting batches
-    def SGD(self, epochs, eta, mini_batch_size, lmbda = None, monitor_text = False, monitor_cost = False, monitor_eval_accuracy = False, monitor_train_accuracy = False):
+    def SGD(self, epochs, eta, mini_batch_size, lmbda = None, monitor_text = False, monitor_cost = False, monitor_eval_accuracy = False, monitor_train_accuracy = False, optimizing=True):
         
         if monitor_cost or monitor_eval_accuracy or monitor_train_accuracy:
             graph = Graph()
@@ -100,13 +100,20 @@ class Network(object):
                 
                 graph.update()
             
-            if monitor_text:
-                print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(self.test_images, self.test_labels), n_test))
-            else:
-                print ("Epoch {0} complete".format(j + 1))
+            if not optimizing:
+                if monitor_text:
+                    print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(self.test_images, self.test_labels), n_test))
+                else:
+                    print ("Epoch {0} complete".format(j + 1))
+            
+            # if j % 5 == 0:
+            #     eta *= 0.9 
         
         if monitor_cost or monitor_eval_accuracy or monitor_train_accuracy:
             graph.ioff()
+        
+        if optimizing:
+            return self.total_cost(self.validation_images, self.validation_labels, lmbda)
 
 
     def backpropogate(self, X, Y, batch_size, eta, lmbda=None):
