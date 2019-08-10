@@ -15,6 +15,6 @@ This project is for learning purposes only and is an attempt at implementing [Ne
 ##### Original Image | Prediction | Confidence
 ![Alt text](Example.png?raw=true "Random Feedforward")
 
-Final classification accuracy after 30 epochs: ~ 96%
+Best classification accuracy (after 30 epochs): 96.08%
 
 ###### Todo: Improve with hyper-parameter optimization
