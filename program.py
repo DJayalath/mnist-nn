@@ -21,9 +21,7 @@ validation_images = np.array(np.reshape(validation_images, (len(validation_image
 
 # Train network
 net = Network([784, 30, 10], training_images, training_labels, test_images, test_labels, validation_images, validation_labels)
-net.SGD(30, 0.5, 20)
-# net.SGD(200, 0.5, 20, lmbda=0.01, monitor_cost=True)
-
+net.SGD(30, 0.5, 20, monitor_text=True)
 
 # Make 5 predictions using trained network for demonstration
 images = np.zeros((5, 784))
