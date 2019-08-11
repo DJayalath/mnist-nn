@@ -34,7 +34,7 @@ validation_images = np.array(np.reshape(validation_images, (len(validation_image
 
 # # Train network
 net = Network([784, 512, 512, 10], training_images, training_labels, test_images, test_labels, validation_images, validation_labels)
-net.SGD(50, 0.2, 128, monitor_text=True, optimizing=False)
+net.SGD(35, 0.2, 128, monitor_text=True, optimizing=False)
 # Best eta so far: 0.2
 # Hyper-opt says: 0.38384960552488084
 
