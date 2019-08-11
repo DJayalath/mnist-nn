@@ -13,6 +13,9 @@ This project is for learning purposes only and is an attempt at implementing, im
 - Bias initialization: 0.1
 - L2 regularization: None
 - Dropout: None
+## Usage
+1. *(Optional)* Set desired hyper-parameters in `program.py`
+2. Run `python3 program.py`
 ## Cost vs Epochs
 ![Alt text](CostvEpochs.png?raw=true "Cost vs Epochs")
 ## Example From Test Set
