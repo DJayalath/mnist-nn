@@ -37,12 +37,16 @@ class Network(object):
     
     @staticmethod
     def sigmoid(z):
-        return 1.0 / (1.0 + np.exp(-z))
+        return np.maximum(0, z)
+        # return 1.0 / (1.0 + np.exp(-z))
 
     # Derivative of the activation function
     @staticmethod
     def sigmoid_derivative(z):
-        return Network.sigmoid(z) * (1.0 - Network.sigmoid(z))
+        z[z < 0] = 0
+        z[z > 0] = 1
+        return z
+        # return Network.sigmoid(z) * (1.0 - Network.sigmoid(z))
     
     def feedforward(self, A):
         for W, B in zip(self.Wh, self.Bh):
