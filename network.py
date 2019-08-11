@@ -12,20 +12,20 @@ class Network(object):
     def __init__(self, sizes, training_images, training_labels, test_images, test_labels, validation_images, validation_labels):
 
         self.num_layers = len(sizes)
-        assert self.num_layers == 3, "Network only supports a single hidden layer!"
         self.sizes = sizes
 
-        # Create matrix of hidden weights
-        self.Wh = np.random.randn(sizes[0], sizes[1]) * np.sqrt(2.0/sizes[0])
-
-        # Create matrix of hidden biases
-        self.Bh = np.full((1, sizes[1]), 0.1)
+        # Create matrix of hidden weights and biases
+        self.Wh = []
+        self.Bh = []
+        for i in range(len(sizes) - 2):
+            self.Wh.append(np.random.randn(sizes[i], sizes[i + 1]) * np.sqrt(2.0/sizes[i]))
+            self.Bh.append(np.full((1, sizes[i + 1]), 0.1))
 
         # Create matrix of output weights
-        self.Wo = np.random.randn(sizes[1], sizes[2]) * np.sqrt(2.0/sizes[1])
+        self.Wo = np.random.randn(sizes[-2], sizes[-1]) * np.sqrt(2.0/sizes[-2])
 
         # Create matrix of output biases
-        self.Bo = np.full((1, sizes[2]), 0.1)
+        self.Bo = np.full((1, sizes[-1]), 0.1)
 
         # Create matrices from input data
         self.training_images = training_images
@@ -44,11 +44,10 @@ class Network(object):
     def sigmoid_derivative(z):
         return Network.sigmoid(z) * (1.0 - Network.sigmoid(z))
     
-    def feedforward(self, X):
-        # Input layer --> Hidden layer
-        H = self.sigmoid(X @ self.Wh + self.Bh)
-        # Hidden layer --> Output layer
-        return self.sigmoid(H @ self.Wo + self.Bo)
+    def feedforward(self, A):
+        for W, B in zip(self.Wh, self.Bh):
+            A = self.sigmoid(A @ W + B)
+        return self.sigmoid(A @ self.Wo + self.Bo)
     
     # Stochastic gradient descent
     # This is the outer-loop stepping through
@@ -116,7 +115,7 @@ class Network(object):
             return self.total_cost(self.validation_images, self.validation_labels, lmbda)
 
 
-    def backpropogate(self, X, Y, batch_size, eta, lmbda=None):
+    def backpropogate(self, X, Y, m, eta, lmbda=None):
 
         # NOTE * is element-wise multiplication (Hadamard product)
         # NOTE @ is matrix multiplication
@@ -125,35 +124,40 @@ class Network(object):
         ## Feedforward, storing Z-values and activations
 
         # Compute hidden Z-values and activations
-        Zh = X @ self.Wh + self.Bh
-        Ah = self.sigmoid(Zh)
+        Ah = [X]
+        Zh = [self.sigmoid(np.dot(X, self.Wh[0]) + self.Bh[0])]
+        for W, B in zip(self.Wh, self.Bh):
+            Z = np.dot(Ah[-1], W) + B
+            Zh.append(Z)
+            Ah.append(self.sigmoid(Z))
 
         # Compute output Z-values and activations
-        Zo = Ah @ self.Wo + self.Bo
+        Zo = np.dot(Ah[-1], self.Wo) + self.Bo
         Ao = self.sigmoid(Zo)
 
         # Compute output layer error
-        Eo = (Ao - Y) * self.sigmoid_derivative(Zo)
+        Eo = (Ao - Y)
 
-        # Computer hidden layer error
-        Eh = (Eo @ self.Wo.T) * self.sigmoid_derivative(Zh)
-
-        # L2 regularization scaling factor
-        if lmbda:
-            sf = (1.0 - (eta * lmbda) / eta)
-        else:
-            sf = 1.0
+        # Compute error for other layers
+        Eh = [(Eo @ self.Wo.T) * self.sigmoid_derivative(Zh[-1])]
+        for l in range(1, self.num_layers - 2):
+            Eh.append((Eh[-1] @ self.Wh[-l].T) * self.sigmoid_derivative(Zh[-l-1]))
         
+        # Reverse so layers are in order of feedforward
+        Eh.reverse()
+
         # Compute eta / m for efficiency
-        ebs = eta / batch_size
+        sf = eta / m
 
-        # Apply weight update rule
-        self.Wo = sf * self.Wo - ebs * (Ah.T @ Eo)
-        self.Wh = sf * self.Wh - ebs * (X.T @ Eh)
+        # Update weights
+        self.Wo -= sf * (Ah[-1].T @ Eo)
+        # Update biases
+        self.Bo -= sf * np.sum(Eo, axis=0)
 
-        # Apply bias update rule
-        self.Bo -= ebs * np.sum(Eo, axis=0)
-        self.Bh -= ebs * np.sum(Eh, axis=0)
+        # Update hidden weights and biases
+        for A, E, W, B in zip(Ah, Eh, self.Wh, self.Bh):
+            W -= sf * (A.T @ E)
+            B -= sf * np.sum(E, axis=0)
     
     # Feedforward input and count how many correct answers were found
     def evaluate(self, X, Y):
