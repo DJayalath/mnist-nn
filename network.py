@@ -108,9 +108,6 @@ class Network(object):
                     print("Epoch {0}: {1} / {2}".format(j + 1, self.evaluate(self.test_images, self.test_labels), n_test))
                 else:
                     print ("Epoch {0} complete".format(j + 1))
-            
-            # if j % 5 == 0:
-            #     eta *= 0.9 
         
         if monitor_cost or monitor_eval_accuracy or monitor_train_accuracy:
             graph.ioff()
