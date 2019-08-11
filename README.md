@@ -16,8 +16,6 @@ This project is for learning purposes only and is an attempt at implementing, im
 ## Usage
 1. *(Optional)* Set desired hyper-parameters in `program.py`
 2. Run `python3 program.py`
-## Cost vs Epochs
-![Alt text](CostvEpochs.png?raw=true "Cost vs Epochs")
 ## Example From Test Set
 ##### Original Image | Prediction | Confidence
 ![Alt text](Example.png?raw=true "Random Feedforward")
