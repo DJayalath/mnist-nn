@@ -19,9 +19,23 @@ test_labels = np.array(np.reshape(test_labels, (len(test_labels), 10)))
 validation_labels = np.array(np.reshape(validation_labels, (len(test_labels), 10)))
 validation_images = np.array(np.reshape(validation_images, (len(validation_images), 784)))
 
-# Train network
-net = Network([784, 30, 10], training_images, training_labels, test_images, test_labels, validation_images, validation_labels)
-net.SGD(15, 0.9329610181548651, 20, monitor_text=True, optimizing=False)
+# def optimize(eta):
+#     net = Network([784, 512, 512, 10], training_images[:10000], training_labels[:10000], test_images[:1000], test_labels[:1000], validation_images[:1000], validation_labels[:1000])
+#     return net.SGD(20, eta, 128)
+
+# from hyperopt import hp
+# space = hp.uniform('eta', 0.0, 0.4)
+# from hyperopt import fmin, tpe
+# best = fmin(fn=optimize,
+#     space=space,
+#     algo=tpe.suggest,
+#     max_evals=100)
+# print(best)
+
+# # Train network
+net = Network([784, 512, 512, 10], training_images, training_labels, test_images, test_labels, validation_images, validation_labels)
+net.SGD(50, 0.23, 128, monitor_text=True, optimizing=False)
+# Best eta so far: 0.2
 
 # Make 5 predictions using trained network for demonstration
 images = np.zeros((5, 784))
