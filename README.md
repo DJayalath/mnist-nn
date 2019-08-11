@@ -1,6 +1,6 @@
 # MNIST-NN
-##### Shallow multilayer perceptron neural network for classifiying hand-written digits using the MNIST dataset. 
-This project is for learning purposes only and is an attempt at implementing, improving and converting the MLP example in [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/) into a fully matrix form. This network is written "from scratch" i.e. no deep learning helper libraries (e.g. Keras, TensorFlow) were used. Mini batch processing is fully vectorized.
+##### Deep multilayer perceptron neural network for classifiying hand-written digits using the MNIST dataset. 
+This project is for learning purposes only and is an attempt at implementing, improving and converting the MLP example in [Neural Networks and Deep Learning (Michael Nielsen)](http://neuralnetworksanddeeplearning.com/) into a fully matrix form. **This network is written "from scratch"** i.e. no deep learning helper libraries (e.g. Keras, TensorFlow) were used. Mini batch processing is fully vectorized.
 ## Architecture (Best classification accuracy: 98.30%)
 - Layers: (784, 512, 512, 10)
 - Learning Rate: 0.2
@@ -12,6 +12,7 @@ This project is for learning purposes only and is an attempt at implementing, im
 - Weight initialization: He
 - Bias initialization: 0.1
 - L2 regularization: None
+- Dropout: None
 ## Cost vs Epochs
 ![Alt text](CostvEpochs.png?raw=true "Cost vs Epochs")
 ## Example From Test Set
